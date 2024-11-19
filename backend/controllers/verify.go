@@ -3,13 +3,12 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
 type VerifyRequest struct {
-	Email            string `json:"email"`
-	VerificationCode string `json:"verification_code"`
+	Email             string `json:"email"`
+	VerificationCode  string `json:"verification_code"`
 }
 
 func VerifyHandler(db *sql.DB) http.HandlerFunc {
@@ -20,31 +19,34 @@ func VerifyHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Проверяем, что код в базе данных совпадает с тем, что прислал пользователь
-		var storedCode string
-		err := db.QueryRow("SELECT verification_code FROM users WHERE email = $1", req.Email).Scan(&storedCode)
+		// Проверка кода и статуса пользователя
+		var storedCode, status string
+		err := db.QueryRow("SELECT verification_code, status FROM users WHERE email = $1", req.Email).Scan(&storedCode, &status)
 		if err != nil {
-			http.Error(w, `{"message": "User not found"}`, http.StatusNotFound)
-			fmt.Println("Error fetching user:", err)
+			if err == sql.ErrNoRows {
+				http.Error(w, `{"message": "User not found"}`, http.StatusNotFound)
+			} else {
+				http.Error(w, `{"message": "Internal server error"}`, http.StatusInternalServerError)
+			}
 			return
 		}
 
-		// Сравниваем коды
-		if req.VerificationCode != storedCode {
+		// Если код неверный
+		if storedCode != req.VerificationCode {
 			http.Error(w, `{"message": "Invalid verification code"}`, http.StatusBadRequest)
 			return
 		}
 
-		// Обновляем статус пользователя в базе данных на "verified"
+		// Если код верный, обновляем статус на "verified"
 		_, err = db.Exec("UPDATE users SET status = 'verified' WHERE email = $1", req.Email)
 		if err != nil {
 			http.Error(w, `{"message": "Failed to update user status"}`, http.StatusInternalServerError)
-			fmt.Println("Error updating user status:", err)
 			return
 		}
 
+		// Ответ при успешной верификации
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Verification successful!"})
+		json.NewEncoder(w).Encode(map[string]string{"message": "User verified successfully"})
 	}
 }

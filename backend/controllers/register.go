@@ -34,9 +34,9 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Сохранение кода в базу данных для последующей проверки
-		_, err = db.Exec("INSERT INTO users (name, last_name, email, password, verification_code) VALUES ($1, $2, $3, $4, $5)",
-			req.Name, req.LastName, req.Email, req.Password, code)
+		// Сохраняем пользователя как unverified, не сохраняем до верификации
+		_, err = db.Exec("INSERT INTO users (name, last_name, email, password, status, verification_code) VALUES ($1, $2, $3, $4, $5, $6)",
+			req.Name, req.LastName, req.Email, req.Password, "unverified", code)
 		if err != nil {
 			http.Error(w, `{"message": "Failed to save user"}`, http.StatusInternalServerError)
 			fmt.Println("Error saving user to database:", err)
@@ -45,6 +45,6 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully. Check your email for the verification code."})
+		json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully. Please verify your email."})
 	}
 }

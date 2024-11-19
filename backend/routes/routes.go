@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"backend/controllers"
 	"database/sql"
+	"backend/controllers"
+
 	"github.com/gorilla/mux"
 )
 
