@@ -1,14 +1,17 @@
 package routes
 
 import (
-	"github.com/gorilla/mux"
+	"database/sql"
 	"backend/controllers"
-	"backend/config"
+
+	"github.com/gorilla/mux"
 )
 
-func SetupRoutes(router *mux.Router) {
-	// Роут для регистрации
-	router.HandleFunc("/register", controllers.RegisterHandler(config.DB)).Methods("POST", "OPTIONS")
-	router.HandleFunc("/login", controllers.LoginHandler(config.DB)).Methods("POST", "OPTIONS")
+func SetupRoutes(db *sql.DB) *mux.Router {
+	router := mux.NewRouter()
 
+	// Регистрация пользователя
+	router.HandleFunc("/register", controllers.RegisterHandler(db)).Methods("POST")
+
+	return router
 }

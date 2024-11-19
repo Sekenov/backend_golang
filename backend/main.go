@@ -1,42 +1,32 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"github.com/gorilla/mux"
-	"backend/config"
-	"backend/routes"
+    "log"
+    "net/http"
+    "github.com/gorilla/handlers"
+    "backend/config"
+    "backend/routes"
 )
 
-// Middleware для разрешения CORS
-func enableCORS(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-        w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-        w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-        if r.Method == "OPTIONS" {
-            w.WriteHeader(http.StatusOK)
-            return
-        }
-        next.ServeHTTP(w, r)
-    })
-}
-
-
 func main() {
-	// Инициализация базы данных
-	config.InitDB()
+    // Подключение к базе данных
+    db, err := config.InitDB()
+    if err != nil {
+        log.Fatal("Failed to connect to the database:", err)
+    }
+    defer db.Close()
 
-	// Создаём роутер
-	router := mux.NewRouter()
+    // Настройка маршрутов
+    router := routes.SetupRoutes(db)
 
-	// Применяем middleware для CORS
-	router.Use(enableCORS)
+    // Добавление CORS
+    corsHandler := handlers.CORS(
+        handlers.AllowedOrigins([]string{"http://localhost:3000"}),
+        handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+        handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+    )
 
-	// Настраиваем маршруты
-	routes.SetupRoutes(router)
-
-	// Запускаем сервер
-	log.Println("Server is running on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+    // Запуск сервера
+    log.Println("Server is running on port 8080...")
+    log.Fatal(http.ListenAndServe(":8080", corsHandler(router)))
 }
