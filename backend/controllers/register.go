@@ -9,11 +9,10 @@ import (
 )
 
 type RegisterRequest struct {
-	Name           string `json:"name"`
-	LastName       string `json:"last_name"`
-	Email          string `json:"email"`
-	Password       string `json:"password"`
-	ConfirmPassword string `json:"confirmPassword"`
+	Name     string `json:"name"`
+	LastName string `json:"last_name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func RegisterHandler(db *sql.DB) http.HandlerFunc {
@@ -21,12 +20,6 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		var req RegisterRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, `{"message": "Invalid request"}`, http.StatusBadRequest)
-			return
-		}
-
-		// Проверка совпадения паролей
-		if req.Password != req.ConfirmPassword {
-			http.Error(w, `{"message": "Passwords do not match"}`, http.StatusBadRequest)
 			return
 		}
 
@@ -41,7 +34,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Сохранение в базу данных
+		// Сохранение кода в базу данных для последующей проверки
 		_, err = db.Exec("INSERT INTO users (name, last_name, email, password, verification_code) VALUES ($1, $2, $3, $4, $5)",
 			req.Name, req.LastName, req.Email, req.Password, code)
 		if err != nil {
@@ -52,6 +45,6 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
+		json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully. Check your email for the verification code."})
 	}
 }

@@ -1,9 +1,8 @@
 package routes
 
 import (
-	"database/sql"
 	"backend/controllers"
-
+	"database/sql"
 	"github.com/gorilla/mux"
 )
 
@@ -12,6 +11,9 @@ func SetupRoutes(db *sql.DB) *mux.Router {
 
 	// Регистрация пользователя
 	router.HandleFunc("/register", controllers.RegisterHandler(db)).Methods("POST")
+
+	// Верификация пользователя
+	router.HandleFunc("/verify", controllers.VerifyHandler(db)).Methods("POST")
 
 	return router
 }
