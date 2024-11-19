@@ -16,5 +16,8 @@ func SetupRoutes(db *sql.DB) *mux.Router {
 	// Верификация пользователя
 	router.HandleFunc("/verify", controllers.VerifyHandler(db)).Methods("POST")
 
+	// Вход пользователя
+	router.HandleFunc("/login", controllers.LoginHandler(db)).Methods("POST")
+
 	return router
 }
