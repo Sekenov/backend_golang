@@ -28,7 +28,7 @@ func main() {
 
     // создааем маршрут для нашего api, SetupRoutes из пакета routes возвращает маршруты, настроенные для работы с базой данных
     router := routes.SetupRoutes(db)
-
+    // njddd
     // Добавление CORS для того чтобы наш фронт который на 3000 мог работать с бэкенд который на 8080
     // handlers.CORS это функция из библиотеки gorilla/handlers, которая позволяет настроить CORS.
     corsHandler := handlers.CORS(
